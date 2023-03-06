@@ -1,0 +1,10 @@
+protobuf==3.20.1
+scikit-learn
+pydflow
+google
+mdtraj
+dpdata
+parmed
+dpdispatcher
+lbg
+matplotlib
