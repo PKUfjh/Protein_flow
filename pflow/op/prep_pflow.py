@@ -62,7 +62,6 @@ class PrepPflow(OP):
     def get_output_sign(cls):
         return OPIOSign(
             {
-                "numb_iters": int,
                 "numb_walkers": int,
                 "confs": Artifact(List[Path]),
                 "walker_tags": List,
@@ -125,7 +124,6 @@ class PrepPflow(OP):
 
         jdata = deepcopy(load_json(op_in["pflow_config"]))
         numb_walkers = jdata.pop("numb_walkers")
-        numb_iters = jdata.pop("numb_iters")
         conf_list = prep_confs(op_in["confs"], numb_walkers)
 
         walker_tags = []
@@ -140,16 +138,15 @@ class PrepPflow(OP):
         angular_mask = cmd_cv_config["angular_mask"]
         weights = cmd_cv_config["weights"]
         
-        selection_config = jdata.pop("SelectorConfig")
+        selection_config = jdata.pop("select_config")
 
-        label_config = jdata.pop("LabelMDConfig")
+        label_config = jdata.pop("label_config")
         
         cluster_threshold = selection_config.pop("cluster_threshold")
         cluster_threshold_list = [cluster_threshold for _ in range(numb_walkers)]
         
         op_out = OPIO(
             {
-                "numb_iters": numb_iters,
                 "numb_walkers": numb_walkers,
                 "confs": conf_list,
                 "walker_tags": walker_tags,

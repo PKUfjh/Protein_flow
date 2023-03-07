@@ -1,0 +1,77 @@
+{
+    "name": "test",
+    "numb_walkers": 2,
+    
+    "cmd_cv": {
+        "mode": "torsion",
+        "selected_resid": [ 1, 2 ],
+        "angular_mask": [ 1, 1, 1],
+        "weights": [ 1, 1, 1],
+        "cv_file":[""]
+    },
+
+    "label_cv": {
+        "mode": "distance",
+        "selected_atomid": [[1, 576]],
+        "angular_mask": [0],
+        "weights": [ 1],
+        "cv_file":[""]
+    },
+
+    "cmd_config": {
+        "nsteps": 5000,
+        "type": "gmx",
+        "temperature": 300,
+        "output_freq": 50,
+        "ref-t": "300 300",
+        "verlet-buffer-tolerance":"-1",
+        "rlist": 1,
+        "rvdw": 0.9,
+        "rvdw-switch": 0,
+        "rcoulomb": 0.9,
+        "rcoulomb-switch": 0,
+        "epsilon-r":1,
+        "epsilon-rf":80,
+        "dt": 0.002,
+        "fourierspacing": "0.12",
+        "output_mode": "single",
+        "ntmpi": 1,
+        "nt": 8,
+        "max_warning": 2
+    },
+
+    "select_config": {
+        "numb_cluster_lower": 3,
+        "numb_cluster_upper": 6,
+        "cluster_threshold": 1.0,
+        "max_selection": 10,
+        "numb_cluster_threshold": 2,
+        "slice_mode": "gmx"
+    },
+
+    "label_config": {
+        "nsteps": 500000,
+        "step": [500000],
+        "final": [10.0],
+        "temperature":300,
+        "method": "restrained",
+        "type": "gmx",
+        "output_freq": 100,
+        "ref-t": "300 300",
+        "rlist": 1,
+        "verlet-buffer-tolerance":"-1",
+        "rvdw": 0.9,
+        "rvdw-switch": 0,
+        "rcoulomb": 0.9,
+        "rcoulomb-switch": 0,
+        "epsilon-r":1,
+        "epsilon-rf":80,
+        "dt": 0.002,
+        "fourierspacing": "0.12",
+        "output_mode": "single",
+        "ntmpi": 1,
+        "nt": 8,
+        "max_warning": 2,
+        "kappas": [5000]
+    }
+}
