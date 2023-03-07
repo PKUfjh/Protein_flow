@@ -41,6 +41,10 @@ Run an example to generate data for CHICKEN VILLIN protein (2F4K)
 pflow submit -i ./tests/data/ -c ./rid/template/rid_gmx_dih.json -m ./rid/template/machine_bohrium_k8s.json
 ```
 
+## Workflow visualization
+The example sets number of walkers for parallel equilibrium MD to be 2. The number of nonequilibrium MD run is 7, so we will have 7 trajectories in total after the workflow run. The workflow can be visualized in the [argo UI](https://workflows.deepmodeling.com/)
+- ![image](test/workflow.png)
+
 # Main procedure of Pflow
 Pflow will run in the following order.
 
