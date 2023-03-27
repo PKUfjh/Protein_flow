@@ -36,6 +36,7 @@ def make_restraint(
         arg: str,
         kappa: Union[str, int, float],
         step: Union[str, int, float],
+        nsteps: Union[str, int, float],
         at: Union[str, int, float],
         final: Union[str, int, float]
     ):
@@ -47,13 +48,17 @@ def make_restraint(
                 kappa0 = kappa,
                 step1 = step,
                 at1 = final,
-                kappa1 = kappa
+                kappa1 = kappa,
+                step2 = nsteps,
+                at2 = final,
+                kappa2 = kappa
             )
 
 def make_moving_restraint_list(
         cv_list: List[str],
         kappa: List[Union[int, float, str]],
         step: List[Union[int, float, str]],
+        nsteps: Union[int, float, str],
         at: List[Union[int, float, str]],
         final: List[Union[int, float, str]]
     ) -> Tuple[List, List]:
@@ -65,7 +70,7 @@ def make_moving_restraint_list(
     for idx, cv_print in enumerate(cv_list):
         res_name = "res-" + cv_print
         res_names.append(res_name)
-        res_list.append(make_restraint(res_name, cv_print, kappa[idx], step[idx], at[idx], final[idx]))
+        res_list.append(make_restraint(res_name, cv_print, kappa[idx], step[idx], nsteps,at[idx], final[idx]))
     return res_list, res_names
 
 
@@ -213,6 +218,7 @@ def make_restraint_plumed(
         selected_atomid: Optional[List[int]] = None,
         kappa: Union[int, float, Sequence, np.ndarray] = 0.5,
         step: Union[int, float, Sequence, np.ndarray] = 500000,
+        nsteps: Union[int, float, Sequence, np.ndarray] = 500000,
         at: Union[int, float, Sequence, np.ndarray] = 1.0,
         final: Union[int, float, Sequence, np.ndarray] = 10.0,
         stride: int = 100,
@@ -242,7 +248,7 @@ def make_restraint_plumed(
         at = [at for _ in range(len(cv_name_list))]
         
     res_list, _ = make_moving_restraint_list(
-        cv_name_list, kappa, step, at, final
+        cv_name_list, kappa, step, nsteps, at, final
     )
     content_list += res_list
     content_list.append(make_print(cv_name_list, stride, output))

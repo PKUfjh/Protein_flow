@@ -88,6 +88,7 @@ class RestrainedMDTaskBuilder(TaskBuilder):
         sampler_type: str = "gmx",
         kappa: Union[int, float, Sequence, np.ndarray] = 0.5,
         step: Union[int, float, Sequence, np.ndarray] = 500000,
+        nsteps: Union[int, float, Sequence, np.ndarray] = 500000,
         final: Union[int, float, Sequence, np.ndarray] = 10.0,
         plumed_output: str = "plm.out",
         cv_mode: str = "torsion"
@@ -105,6 +106,7 @@ class RestrainedMDTaskBuilder(TaskBuilder):
         self.sampler_type = sampler_type
         self.kappa = kappa
         self.step = step
+        self.nsteps = nsteps
         self.final = final
         self.task = Task()
     
@@ -128,7 +130,7 @@ class RestrainedMDTaskBuilder(TaskBuilder):
     def build_plumed(self):
         return build_plumed_restraint_dict(
             conf=self.conf, cv_file=self.cv_file, selected_resid=self.selected_resid,
-            selected_atomid=self.selected_atomid, kappa=self.kappa, step=self.step,
+            selected_atomid=self.selected_atomid, kappa=self.kappa, step=self.step,nsteps=self.nsteps,
             final=self.final,stride=self.stride, output=self.plumed_output, mode=self.cv_mode
         )
 
@@ -169,6 +171,7 @@ def build_plumed_restraint_dict(
         selected_atomid: Optional[List[int]] = None,
         kappa: Union[int, float, Sequence, np.ndarray] = 0.5,
         step: Union[int, float, Sequence, np.ndarray] = 500000,
+        nsteps: Union[int, float, Sequence, np.ndarray] = 500000,
         final: Union[int, float, Sequence, np.ndarray] = 10.0,
         stride: int = 100,
         output: str = "plm.out",
@@ -182,7 +185,7 @@ def build_plumed_restraint_dict(
             at.append(cv_info["%s %s"%(selected_atomid[dis_id][0],selected_atomid[dis_id][1])])
     plm_content = make_restraint_plumed(
         conf=conf, cv_file=cv_file, selected_resid=selected_resid,selected_atomid = selected_atomid,
-        kappa=kappa, step=step, at=at, final=final, stride=stride,
+        kappa=kappa, step=step, nsteps=nsteps,at=at, final=final, stride=stride,
         output=output, mode=mode
     )
     plumed_task_files[plumed_input_name] = (plm_content, "w")

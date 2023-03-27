@@ -168,6 +168,7 @@ class PrepLabel(OP):
                 sampler_type = op_in["label_config"]["type"],
                 kappa = op_in["label_config"]["kappas"],
                 step = op_in["label_config"]["step"],
+                nsteps = op_in["label_config"]["nsteps"],
                 final = op_in["label_config"]["final"],
                 plumed_output = plumed_output_name,
                 cv_mode = op_in["label_cv_config"]["mode"]

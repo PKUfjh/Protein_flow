@@ -16,15 +16,6 @@ if NUMEXPR_MAX_THREADS is None:
     NUMEXPR_MAX_THREADS = 8
     os.environ["NUMEXPR_MAX_THREADS"] = str(NUMEXPR_MAX_THREADS)
 
-try:
-    import tensorflow.compat.v1 as tf
-    tf.logging.set_verbosity(tf.logging.ERROR)
-    tf.disable_v2_behavior()
-except ImportError:
-    import tensorflow as tf
-    tf.logging.set_verbosity(tf.logging.ERROR)
-
-
 from .submit import submit_pflow
 from .resubmit import resubmit_pflow
 from .info import information
