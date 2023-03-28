@@ -57,10 +57,10 @@ class RunCMD(OP):
     def get_output_sign(cls):
         return OPIOSign(
             {
-                "plm_out": Artifact(Path),
-                "md_log": Artifact(Path),
-                "trajectory": Artifact(Path),
-                "conf_out": Artifact(Path)
+                "plm_out": Artifact(Path, archive = None),
+                "md_log": Artifact(Path, archive = None),
+                "trajectory": Artifact(Path, archive = None),
+                "conf_out": Artifact(Path, archive = None)
             }
         )
 

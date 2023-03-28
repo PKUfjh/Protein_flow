@@ -56,8 +56,8 @@ class RunSelect(OP):
         return OPIOSign(
             {
                 "numb_cluster": int,
-                "selected_confs": Artifact(List[Path]),
-                "selected_indices": Artifact(Path),
+                "selected_confs": Artifact(List[Path], archive = None),
+                "selected_indices": Artifact(Path, archive = None),
                 "selected_conf_tags": Dict
             }
         )

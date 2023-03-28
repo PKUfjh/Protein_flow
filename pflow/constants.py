@@ -38,30 +38,11 @@ gmx_xtc_name = "traj_comp.xtc"
 sel_gro_name = "conf_{walker:03d}_{idx:d}.gro"
 sel_gro_name_gmx = "conf_.gro"
 gmx_conf_out = "confout.gro"
-gmx_coord_name = "coord.xvg"
-gmx_force_name = "force.xvg"
+gmx_align_name = "traj_aligned_pro.xtc"
 
-# Lammps file names
-lmp_conf_name = "conf.lmp"
-lmp_input_name = "input.lammps"
-lmp_mdrun_log = "log.lammps"
-sel_lmp_name = "conf_{walker:03d}_{idx:d}.lmp"
-lmp_conf_out = "confout.lmp"
-
-
-# Tensorflow files
-tf_model_name = "model_{tag}.pb"
-dp_model_name = "dp.pb"
-model_tag_fmt = "{idx:03d}"
-N_grid = 100
-
-# Dp config file
-dp_config_name = "dp_config"
-
-# figure file name
-mf_fig = "mf_average.png"
-bias_fig = "bias.png"
-model_devi_fig = "model_devi.png"
+# npz file
+traj_npz_name = 'traj_aligned.npz'
+combined_npz_name = "combined_traj.npz"
 
 # Units
 kb = 8.617333E-5

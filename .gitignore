@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+.nfs*
+pflow.egg-info
+*.eggs
+dist
+build
+tmp*
+_version.py
+.coverage

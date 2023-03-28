@@ -124,8 +124,7 @@ def _select(
             run_select_op,
             python_packages = upload_python_package,
             retry_on_transient_error = retry_times,
-            slices=Slices(
-                "int({{item}})",
+            slices=Slices(sub_path = True,
                 input_parameter=["cluster_threshold", "task_name"],
                 input_artifact=["plm_out","xtc_traj","topology"],
                 output_artifact=["selected_confs", "selected_indices"],
@@ -150,9 +149,8 @@ def _select(
             "xtc_traj": select_steps.inputs.artifacts['xtc_traj'],
             "topology": select_steps.inputs.artifacts['topology'],
         },
-        key = step_keys["run_select"]+"-{{item}}",
+        key = step_keys["run_select"]+"-{{item.order}}",
         executor = run_executor,
-        with_param=argo_range(argo_len(select_steps.inputs.parameters["task_names"])),
         **run_config,
     )
     select_steps.add(run_select)

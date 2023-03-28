@@ -2,6 +2,7 @@ from typing import Dict, List
 from copy import deepcopy
 from dflow import (
     InputParameter,
+    OutputParameter,
     Inputs,
     InputArtifact,
     Outputs,
@@ -48,10 +49,11 @@ class Label(Steps):
             "index_file": InputArtifact(optional=True),
         }
         self._output_parameters = {
+            "conf_tags": OutputParameter(type=List)
         }
         self._output_artifacts = {
-            "md_log": OutputArtifact(),
-            "plm_out": OutputArtifact()
+            "conf_begin": OutputArtifact(),
+            "trajectory_aligned": OutputArtifact()
         }
 
         super().__init__(        
@@ -68,8 +70,8 @@ class Label(Steps):
         
         step_keys = {
             "check_label_inputs": "check-label-inputs",
-            "prep_label": "prep-label-block",
-            "run_label": "run-label-block",
+            "prep_label": "prep-label",
+            "run_label": "run-label",
         }
 
         self = _label(
@@ -151,7 +153,7 @@ def _label(
             prep_label_op,
             python_packages = upload_python_package,
             retry_on_transient_error = retry_times,
-            slices=Slices("{{item}}",
+            slices=Slices(sub_path = True,
                 input_parameter=["task_name"],
                 input_artifact=["conf"],
                 output_artifact=["task_path"]),
@@ -166,9 +168,8 @@ def _label(
             "topology": label_steps.inputs.artifacts['topology'],
             "conf": label_steps.inputs.artifacts['confs']
         },
-        key = step_keys['prep_label']+"-{{item}}",
+        key = step_keys['prep_label']+"-{{item.order}}",
         executor = prep_executor,
-        with_param=argo_range(argo_len(check_label_inputs.outputs.parameters['conf_tags'])),
         when = "%s > 0" % (check_label_inputs.outputs.parameters["if_continue"]),
         **prep_config,
     )
@@ -180,10 +181,10 @@ def _label(
             run_label_op,
             python_packages = upload_python_package,
             retry_on_transient_error = retry_times,
-            slices=Slices("{{item}}",
+            slices=Slices(sub_path = True,
                 input_parameter=["task_name"],
                 input_artifact=["task_path"],
-                output_artifact=["plm_out","trajectory","md_log"]),
+                output_artifact=["plm_out","trajectory_aligned","conf_begin","md_log"]),
             **run_template_config,
         ),
         parameters={
@@ -196,15 +197,15 @@ def _label(
             "task_path": prep_label.outputs.artifacts["task_path"],
             "index_file": label_steps.inputs.artifacts['index_file'],
         },
-        key = step_keys['run_label']+"-{{item}}",
+        key = step_keys['run_label']+"-{{item.order}}",
         executor = run_executor,
-        with_param=argo_range(argo_len(check_label_inputs.outputs.parameters['conf_tags'])),
         continue_on_success_ratio = 0.75,
         **run_config,
     )
     label_steps.add(run_label)
 
-    label_steps.outputs.artifacts["plm_out"]._from = run_label.outputs.artifacts["plm_out"]
-    label_steps.outputs.artifacts["md_log"]._from = run_label.outputs.artifacts["md_log"]
+    label_steps.outputs.parameters["conf_tags"].value_from_parameter = check_label_inputs.outputs.parameters["conf_tags"]
+    label_steps.outputs.artifacts["trajectory_aligned"]._from = run_label.outputs.artifacts["trajectory_aligned"]
+    label_steps.outputs.artifacts["conf_begin"]._from = run_label.outputs.artifacts["conf_begin"]
     
     return label_steps

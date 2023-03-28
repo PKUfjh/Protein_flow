@@ -273,6 +273,7 @@ def main():
             topology = top_file,
             pflow_config = args.config,
             machine_config = args.machine,
+            pod = args.pod,
             forcefield = forcefield,
             index_file = index_file
         )

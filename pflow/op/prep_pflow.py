@@ -9,7 +9,7 @@ from dflow.python import (
     Artifact
 )
 from pflow.utils import load_json
-from pflow.constants import model_tag_fmt, init_conf_name, init_input_name, walker_tag_fmt
+from pflow.constants import init_conf_name, walker_tag_fmt
 
 
 logging.basicConfig(
@@ -63,7 +63,7 @@ class PrepPflow(OP):
         return OPIOSign(
             {
                 "numb_walkers": int,
-                "confs": Artifact(List[Path]),
+                "confs": Artifact(List[Path],archive = None),
                 "walker_tags": List,
                 
                 "cmd_config": Dict,

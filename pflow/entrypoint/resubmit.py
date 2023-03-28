@@ -26,6 +26,7 @@ def resubmit_pflow(
         topology: Optional[str],
         pflow_config: str,
         machine_config: str,
+        pod: Optional[str] = None,
         forcefield: Optional[str] = None,
         index_file: Optional[str] = None,
     ):
@@ -43,6 +44,8 @@ def resubmit_pflow(
         prep_label_config = normalized_resources[tasks["prep_label_config"]],
         run_label_config = normalized_resources[tasks["run_label_config"]],
         run_select_config = normalized_resources[tasks["run_select_config"]],
+        prep_data_config = normalized_resources[tasks["prep_data_config"]],
+        combine_data_config = normalized_resources[tasks["combine_data_config"]],
         workflow_steps_config = normalized_resources[tasks["workflow_steps_config"]],
         retry_times=None
     )
@@ -88,10 +91,25 @@ def resubmit_pflow(
     all_steps = old_workflow.query_step()
 
     succeeded_steps = []
+    restart_flag = 1
     for step in all_steps:
         if step["type"] == "Pod":
-            if step["phase"] == "Succeeded":
-                if step["key"] != "prepare-pflow":
+            # if step["phase"] == "Succeeded":
+            if step["key"] != "prepare-pflow":
+                pod_key = step["key"]
+                if pod_key is not None:
+                    pod_key_list = pod_key.split("-")
+                    pod_step = "-".join(pod_key_list[:-1])
+                    if pod is not None:
+                        if pod_step == pod:
+                            restart_flag = 0
+                    else:
+                        if step["phase"] != "Succeeded":
+                            restart_flag = 0
+                        else:
+                            restart_flag = 1
+                
+                if restart_flag == 1:
                     succeeded_steps.append(step)
     wf = Workflow("pdflow-workflow-continue", pod_gc_strategy="OnPodSuccess", parallelism=50)
     wf.add(pflow_steps)

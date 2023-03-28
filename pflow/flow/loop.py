@@ -26,6 +26,7 @@ class ProteinFlow(Steps):
             cmd_op : Steps,
             selector_op: Steps,
             label_op: Steps,
+            data_op: Steps,
             step_config : dict,
             upload_python_package : str = None,
     ):
@@ -69,6 +70,7 @@ class ProteinFlow(Steps):
             cmd_op,
             selector_op,
             label_op,
+            data_op,
             step_config = step_config,
             upload_python_package = upload_python_package,
         )
@@ -105,6 +107,7 @@ def _pflow(
         cmd_op,
         selector_op,
         label_op,
+        data_op,
         step_config : dict,
         upload_python_package : Optional[str] = None
     ):  
@@ -190,6 +193,20 @@ def _pflow(
         key = 'label-block'
     )
     steps.add(label_pflow)
+    
+    data_pflow =  Step(
+        "Data",
+        template=data_op,
+        parameters={
+            "task_name": label_pflow.outputs.parameters['conf_tags']
+        },
+        artifacts={
+            "conf_begin": label_pflow.outputs.artifacts['conf_begin'],
+            "trajectory_aligned" : label_pflow.outputs.artifacts['trajectory_aligned']
+        },
+        key = 'data-block'
+    )
+    steps.add(data_pflow)
     
     steps.outputs.artifacts['trajectory']._from = cmd_pflow.outputs.artifacts['trajectory']
     steps.outputs.artifacts['conf_outs']._from =  cmd_pflow.outputs.artifacts['conf_outs']

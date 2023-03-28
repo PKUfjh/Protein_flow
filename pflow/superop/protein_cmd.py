@@ -123,7 +123,7 @@ def _cmd(
             prep_cmd_op,
             python_packages = upload_python_package,
             retry_on_transient_error = retry_times,
-            slices=Slices("{{item}}",
+            slices=Slices(sub_path = True,
                 input_parameter=["task_name"],
                 input_artifact=["conf"],
                 output_artifact=["task_path"]
@@ -139,8 +139,7 @@ def _cmd(
             "topology" :cmd_steps.inputs.artifacts['topology'],
             "conf" : cmd_steps.inputs.artifacts['confs']
         },
-        key = step_keys["prep_cmd"]+"-{{item}}",
-        with_param=argo_range(argo_len(cmd_steps.inputs.parameters['task_names'])),
+        key = step_keys["prep_cmd"]+"-{{item.order}}",
         executor = prep_executor,
         **prep_config,
     )
@@ -152,7 +151,7 @@ def _cmd(
             run_cmd_op,
             python_packages = upload_python_package,
             retry_on_transient_error = retry_times,
-            slices=Slices("{{item}}",
+            slices=Slices(sub_path = True,
                 input_artifact=["task_path"],
                 output_artifact=["plm_out", "trajectory", "md_log", "conf_out"]
             ),
@@ -166,9 +165,8 @@ def _cmd(
             "forcefield": cmd_steps.inputs.artifacts['forcefield'],
             "index_file": cmd_steps.inputs.artifacts['index_file']
         },
-        key = step_keys["run_cmd"]+"-{{item}}",
+        key = step_keys["run_cmd"]+"-{{item.order}}",
         executor = run_executor,
-        with_param=argo_range(argo_len(cmd_steps.inputs.parameters['task_names'])),
         **run_config,
     )
     cmd_steps.add(run_cmd)

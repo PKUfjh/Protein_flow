@@ -17,11 +17,12 @@ from pflow.constants import (
         plumed_input_name,
         plumed_output_name,
         gmx_mdrun_log,
-        lmp_mdrun_log,
-        gmx_xtc_name
+        gmx_xtc_name,
+        gmx_align_name
     )
 
 from pflow.utils import run_command, set_directory, list_to_string
+from pflow.common.gromacs.trjconv import pbc_trjconv, align_trjconv, begin_trjconv
 from pflow.common.sampler.command import get_grompp_cmd, get_mdrun_cmd
 import numpy as np
 
@@ -59,9 +60,10 @@ class RunLabel(OP):
     def get_output_sign(cls):
         return OPIOSign(
             {
-                "plm_out": Artifact(Path),
-                "trajectory": Artifact(Path),
-                "md_log": Artifact(Path)
+                "plm_out": Artifact(Path, archive = None),
+                "conf_begin": Artifact(Path, archive = None),
+                "trajectory_aligned": Artifact(Path, archive = None),
+                "md_log": Artifact(Path, archive = None)
             }
         )
 
@@ -134,12 +136,19 @@ class RunLabel(OP):
                 return_code, out, err = run_command(run_cmd)
                 assert return_code == 0, err
                 logger.info(err)
+
+            pbc_trjconv(xtc = gmx_xtc_name)
+            align_trjconv(output_group = 1)
+            begin_trjconv(xtc = gmx_align_name)
             
-        traj_path = None
+        traj_aligned_path = None
+        conf_begin_path = None
         if op_in["label_config"]["type"] == "gmx":
             mdrun_log = gmx_mdrun_log
-            if os.path.exists(op_in["task_path"].joinpath(gmx_xtc_name)):
-                traj_path = op_in["task_path"].joinpath(gmx_xtc_name)
+            if os.path.exists(op_in["task_path"].joinpath(gmx_align_name)):
+                traj_aligned_path = op_in["task_path"].joinpath(gmx_align_name)
+            if os.path.exists(op_in["task_path"].joinpath("begin.gro")):
+                conf_begin_path = op_in["task_path"].joinpath("begin.gro")
 
         plm_out = None
         
@@ -149,7 +158,8 @@ class RunLabel(OP):
         op_out = OPIO(
             {
                 "plm_out": plm_out,
-                "trajectory": traj_path,
+                "trajectory_aligned": traj_aligned_path,
+                "conf_begin": conf_begin_path,
                 "md_log": op_in["task_path"].joinpath(mdrun_log)
             }
         )
