@@ -26,7 +26,9 @@ class Data(Steps):
         self,
         name: str,
         prep_data_op: OP,
+        combine_data_op: OP,
         prep_data_config: Dict,
+        combine_data_config: Dict,
         upload_python_package = None,
         retry_times = None
     ):
@@ -41,6 +43,7 @@ class Data(Steps):
         self._output_parameters = {
         }
         self._output_artifacts = {
+            "combined_npz": OutputArtifact(),
         }
 
         super().__init__(        
@@ -56,14 +59,17 @@ class Data(Steps):
             )
         
         step_keys = {
-            "prep_data": "prep-data"
+            "prep_data": "prep-data",
+            "combine_data": "combine_data"
         }
 
         self = _data(
             self, 
             step_keys,
             prep_data_op,
+            combine_data_op,
             prep_data_config = prep_data_config,
+            combine_data_config = combine_data_config,
             upload_python_package = upload_python_package,
             retry_times = retry_times
         )            
@@ -93,16 +99,18 @@ def _data(
         data_steps,
         step_keys,
         prep_data_op : OP,
+        combine_data_op: OP,
         prep_data_config : Dict,
+        combine_data_config : Dict,
         upload_python_package : str = None,
         retry_times: int = None
     ):
     prep_data_config = deepcopy(prep_data_config)
-    # combine_data_config = deepcopy(combine_data_config)
+    combine_data_config = deepcopy(combine_data_config)
     prep_template_config = prep_data_config.pop('template_config')
-    # combine_template_config = combine_data_config.pop('template_config')
+    combine_template_config = combine_data_config.pop('template_config')
     prep_executor = init_executor(prep_data_config.pop('executor'))
-    # combine_executor = init_executor(combine_data_config.pop('executor'))
+    combine_executor = init_executor(combine_data_config.pop('executor'))
 
 
     prep_data = Step(
@@ -130,24 +138,24 @@ def _data(
     )
     data_steps.add(prep_data)
     
-    # combine_data = Step(
-    # 'combine-data',
-    # template=PythonOPTemplate(
-    #     combine_data_op,
-    #     python_packages = upload_python_package,
-    #     retry_on_transient_error = retry_times,
-    #     **combine_template_config,
-    # ),
-    # parameters={},
-    # artifacts={
-    #     "traj_npz": prep_data.outputs.artifacts["traj_npz"]
-    # },
-    # key = step_keys['combine_data'],
-    # executor = combine_executor,
-    # **combine_data_config,
-    # )
-    # data_steps.add(combine_data)
+    combine_data = Step(
+        'combine-data',
+        template=PythonOPTemplate(
+            combine_data_op,
+            python_packages = upload_python_package,
+            retry_on_transient_error = retry_times,
+            **combine_template_config,
+        ),
+        parameters={},
+        artifacts={
+            "traj_npz": prep_data.outputs.artifacts['traj_npz'],
+        },
+        key = step_keys['combine_data'],
+        executor = combine_executor,
+        **combine_data_config,
+    )
+    data_steps.add(combine_data)
 
-    # data_steps.outputs.artifacts["combined_npz"]._from = combine_data.outputs.artifacts["combined_npz"]
+    data_steps.outputs.artifacts["combined_npz"]._from = combine_data.outputs.artifacts["combined_npz"]
     
     return data_steps

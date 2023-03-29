@@ -69,7 +69,9 @@ def prep_pflow_op(
     data_op = Data(
         "data",
         PrepData,
+        CombineData,
         prep_data_config,
+        combine_data_config,
         retry_times=retry_times)
     
     pflow_op = ProteinFlow(
