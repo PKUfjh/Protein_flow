@@ -25,6 +25,7 @@ from pflow.utils import run_command, set_directory, list_to_string
 from pflow.common.gromacs.trjconv import pbc_trjconv, align_trjconv, begin_trjconv
 from pflow.common.sampler.command import get_grompp_cmd, get_mdrun_cmd
 import numpy as np
+import matplotlib.pyplot as plt
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -61,6 +62,7 @@ class RunLabel(OP):
         return OPIOSign(
             {
                 "plm_out": Artifact(Path, archive = None),
+                "plm_fig": Artifact(Path, archive = None),
                 "conf_begin": Artifact(Path, archive = None),
                 "trajectory_aligned": Artifact(Path, archive = None),
                 "md_log": Artifact(Path, archive = None)
@@ -141,6 +143,20 @@ class RunLabel(OP):
             align_trjconv(output_group = 1)
             begin_trjconv(xtc = gmx_align_name)
             
+            # Load the data from the text file
+            data = np.loadtxt(plumed_output_name)
+            # Extract the second column
+            second_column = data[:, 1]
+            # Create the plot
+            plt.plot(second_column)
+            # Add labels and title
+            plt.xlabel('Frames')
+            plt.ylabel('Distance')
+            plt.title('Distance during simulation')
+
+            # Show the plot
+            plt.savefig("plm.png")
+            
         traj_aligned_path = None
         conf_begin_path = None
         if op_in["label_config"]["type"] == "gmx":
@@ -151,13 +167,16 @@ class RunLabel(OP):
                 conf_begin_path = op_in["task_path"].joinpath("begin.gro")
 
         plm_out = None
-        
         if os.path.exists(op_in["task_path"].joinpath(plumed_output_name)):
             plm_out = op_in["task_path"].joinpath(plumed_output_name)
+        plm_fig = None
+        if os.path.exists(op_in["task_path"].joinpath("plm.png")):
+            plm_fig = op_in["task_path"].joinpath("plm.png")
             
         op_out = OPIO(
             {
                 "plm_out": plm_out,
+                "plm_fig": plm_fig,
                 "trajectory_aligned": traj_aligned_path,
                 "conf_begin": conf_begin_path,
                 "md_log": op_in["task_path"].joinpath(mdrun_log)

@@ -184,7 +184,7 @@ def _label(
             slices=Slices(sub_path = True,
                 input_parameter=["task_name"],
                 input_artifact=["task_path"],
-                output_artifact=["plm_out","trajectory_aligned","conf_begin","md_log"]),
+                output_artifact=["plm_out","plm_fig","trajectory_aligned","conf_begin","md_log"]),
             **run_template_config,
         ),
         parameters={
