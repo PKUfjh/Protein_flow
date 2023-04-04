@@ -60,7 +60,7 @@ class Data(Steps):
         
         step_keys = {
             "prep_data": "prep-data",
-            "combine_data": "combine_data"
+            "combine_data": "combine-data"
         }
 
         self = _data(

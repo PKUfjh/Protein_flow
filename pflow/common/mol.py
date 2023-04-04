@@ -151,3 +151,25 @@ def slice_dump(
         )
     else:
         raise RuntimeError("Unknown Style for Slicing Trajectory.")
+    
+def npz_to_xtc(npz_file, xtc_file):
+    """
+    Convert an NPZ file to a Gromacs XTC file using mdtraj.
+    
+    Args:
+        npz_file (str): The name of the input NPZ file.
+        xtc_file (str): The name of the output XTC file.
+    """
+    # Load data from NPZ file
+    with np.load(npz_file,allow_pickle=True) as data:
+        coordinates = data['positions']
+        topology = data['topology']
+    
+    # Create MDTraj topology object from topology data
+    traj = md.Trajectory(xyz=coordinates, topology=topology[()])
+    
+    # # Add box dimensions to trajectory object
+    # traj.unitcell_vectors = box
+    
+    # Write trajectory to XTC file
+    traj.save_xtc(xtc_file)

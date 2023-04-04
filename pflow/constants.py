@@ -44,6 +44,9 @@ gmx_align_name = "traj_aligned_pro.xtc"
 traj_npz_name = 'traj_aligned.npz'
 combined_npz_name = "combined_traj.npz"
 
+# Model files
+model_tag_fmt = "{idx:03d}"
+
 # Units
 kb = 8.617333E-5
 kbT = (8.617333E-5) * 300

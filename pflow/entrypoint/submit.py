@@ -21,6 +21,7 @@ from pflow.superop.protein_cmd import CMD
 from pflow.superop.selector import Selector
 from pflow.superop.protein_label import Label
 from pflow.superop.protein_data import Data
+from pflow.superop.protein_train import Train
 from pflow.op.prep_cmd import PrepCMD
 from pflow.op.run_cmd import RunCMD
 from pflow.op.prep_label import CheckLabelInputs,PrepLabel
@@ -28,6 +29,7 @@ from pflow.op.prep_data import PrepData
 from pflow.op.combine_data import CombineData
 from pflow.op.run_label import RunLabel
 from pflow.op.run_select import RunSelect
+from pflow.op.run_train import TrainModel
 from pflow.flow.loop import ProteinFlow
 
 
@@ -39,6 +41,7 @@ def prep_pflow_op(
     run_select_config,
     prep_data_config,
     combine_data_config,
+    train_config,
     workflow_steps_config,
     retry_times
     ):
@@ -74,12 +77,19 @@ def prep_pflow_op(
         combine_data_config,
         retry_times=retry_times)
     
+    train_op = Train(
+        "train",
+        TrainModel,
+        train_config,
+        retry_times=retry_times)
+    
     pflow_op = ProteinFlow(
         "pflow",
         cmd_op,
         select_op,
         label_op,
         data_op,
+        train_op,
         workflow_steps_config
     )
     return pflow_op
@@ -109,6 +119,7 @@ def submit_pflow(
         run_select_config = normalized_resources[tasks["run_select_config"]],
         prep_data_config = normalized_resources[tasks["prep_data_config"]],
         combine_data_config = normalized_resources[tasks["combine_data_config"]],
+        train_config = normalized_resources[tasks["train_config"]],
         workflow_steps_config = normalized_resources[tasks["workflow_steps_config"]],
         retry_times=1
     )

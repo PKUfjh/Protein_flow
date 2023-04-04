@@ -9,7 +9,7 @@ from dflow.python import (
     Artifact
 )
 from pflow.utils import load_json
-from pflow.constants import init_conf_name, walker_tag_fmt
+from pflow.constants import init_conf_name, walker_tag_fmt, model_tag_fmt
 
 
 logging.basicConfig(
@@ -63,9 +63,11 @@ class PrepPflow(OP):
         return OPIOSign(
             {
                 "numb_walkers": int,
+                "numb_models": int,
                 "confs": Artifact(List[Path],archive = None),
                 "walker_tags": List,
-                
+                "model_tags": List,
+                "train_config": Dict,
                 "cmd_config": Dict,
                 "cmd_cv_config": Dict,
                 "label_cv_config": Dict,
@@ -124,11 +126,16 @@ class PrepPflow(OP):
 
         jdata = deepcopy(load_json(op_in["pflow_config"]))
         numb_walkers = jdata.pop("numb_walkers")
+        train_config = jdata.pop("train_config")
+        numb_models = train_config.pop("numb_models")
         conf_list = prep_confs(op_in["confs"], numb_walkers)
-
+        
         walker_tags = []
+        model_tags = []
         for idx in range(numb_walkers):
             walker_tags.append(walker_tag_fmt.format(idx=idx))
+        for idx in range(numb_models):
+            model_tags.append(model_tag_fmt.format(idx=idx))
         
         cmd_config = jdata.pop("cmd_config")
         dt = cmd_config["dt"]
@@ -148,9 +155,12 @@ class PrepPflow(OP):
         op_out = OPIO(
             {
                 "numb_walkers": numb_walkers,
+                "numb_models": numb_models,
                 "confs": conf_list,
                 "walker_tags": walker_tags,
+                "model_tags": model_tags,
 
+                "train_config": train_config,
                 "cmd_config": cmd_config,
                 "cmd_cv_config": cmd_cv_config,
                 "label_cv_config": label_cv_config,

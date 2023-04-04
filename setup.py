@@ -28,6 +28,7 @@ setuptools.setup(
         "pflow",
         "pflow/entrypoint",
         "pflow/flow",
+        "pflow/nn",
         "pflow/common",
         "pflow/common/gromacs",
         "pflow/common/lammps",

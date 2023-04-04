@@ -73,5 +73,14 @@
         "nt": 8,
         "max_warning": 2,
         "kappas": [5000]
+    },
+    "train_config": {
+        "numb_models": 4,
+        "nheads": 8,
+        "nlayers": 2,
+        "keysize": 16,
+        "batchsize": 100,
+        "epochs": 8000,
+        "init_lr": 0.001
     }
 }

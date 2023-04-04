@@ -4,7 +4,6 @@ pydflow
 google
 mdtraj
 dpdata
-parmed
 dpdispatcher
 lbg
 matplotlib

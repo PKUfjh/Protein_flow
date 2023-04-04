@@ -83,3 +83,20 @@ def save_pkl(
     ):
     with open(fname, "wb") as ff:
         pickle.dump(obj, fname)
+        
+def loaddata(dataset):
+
+    data = np.load(dataset,allow_pickle = True)
+    X1 = data['positions']
+    cell = data['box']
+    topology = data["topology"]
+    assert (cell[0][0][0,0] == cell[0][0][1,1])
+    L = cell[0][0][0,0]
+    traj_length, n, dim = X1.shape[1], X1.shape[2], X1.shape[3]
+    X1 = X1.reshape(X1.shape[0], X1.shape[1],n*dim)
+
+    print (X1.shape, L)
+    print (np.min(X1), np.max(X1))
+    X1 -= L * np.floor(X1/L)
+    
+    return X1, traj_length, n, dim, L, topology
