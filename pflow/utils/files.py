@@ -97,6 +97,5 @@ def loaddata(dataset):
 
     print (X1.shape, L)
     print (np.min(X1), np.max(X1))
-    X1 -= L * np.floor(X1/L)
     
-    return X1, traj_length, n, dim, L, topology
+    return X1, traj_length, n, dim, cell, topology

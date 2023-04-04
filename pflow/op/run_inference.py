@@ -21,7 +21,8 @@ from pflow.nn.transformer import make_transformer
 
 from pflow.nn.flow import make_flow 
 from pflow.nn.loss import make_loss
-from pflow.utils.files import loaddata, npz_to_xtc
+from pflow.utils.files import loaddata
+from pflow.common.mol import npz_to_xtc
 from pflow.nn import checkpoint
 import matplotlib.pyplot as plt 
 
@@ -59,7 +60,7 @@ class RunInference(OP):
         self,
         op_in: OPIO,
     ) -> OPIO:
-        X, traj_length, n, dim, L, topology = loaddata(op_in["init_data"])
+        X, traj_length, n, dim, cell, topology = loaddata(op_in["init_data"])
         key = jax.random.PRNGKey(42)
         key, subkey = jax.random.split(key)
         
@@ -71,6 +72,7 @@ class RunInference(OP):
         batchsize = train_config["batchsize"]
         lr = train_config["init_lr"]
         frame_dt = train_config["frame_dt"]
+        L = cell[0][0][0,0]
         params, vec_field_net = make_transformer(subkey, n, dim, nheads, nlayers, keysize, L)
         sampler = make_flow(vec_field_net, n*dim, L)
         
@@ -101,13 +103,14 @@ class RunInference(OP):
             plt.plot(t, loss, 'o')
             plt.show()
             '''
-
+            print("init data shape",X.shape)
             key, subkey = jax.random.split(key)
+            print("first atom",X[0][0][:3])
             x = sampler(params, X)
             print ('sample shape', x.shape)
             position = x[0]
             position = position.reshape(position.shape[0],-1,3)
-            np.savez("traj_data.npz",positions=position,topology=topology)
+            np.savez("traj_data.npz",positions=position,box = cell,topology=topology)
             npz_to_xtc("traj_data.npz","traj.xtc")
             
         

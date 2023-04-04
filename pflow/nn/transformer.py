@@ -62,7 +62,7 @@ def layer_norm(x: jnp.ndarray) -> jnp.ndarray:
   return x
 
 def make_transformer(key, n, dim, num_heads, num_layers, key_sizes, L):
-    x = jax.random.uniform(key, (n, dim), minval=0, maxval=L)
+    x = jax.random.uniform(key, (n, dim))
     t = jax.random.uniform(key)
 
     def forward_fn(x, t):

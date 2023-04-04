@@ -76,7 +76,9 @@ class TrainModel(OP):
         """
         key = jax.random.PRNGKey(42)
         key, subkey = jax.random.split(key)
-        X, traj_length, n, dim, L, topology = loaddata(op_in["data"])
+        X, traj_length, n, dim, cell, topology = loaddata(op_in["data"])
+        
+        L = cell[0][0][0,0]
 
         train_config = op_in["train_config"]
         task_path = Path(op_in["model_tags"])
