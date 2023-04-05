@@ -164,9 +164,11 @@ def npz_to_xtc(npz_file, xtc_file):
     with np.load(npz_file,allow_pickle=True) as data:
         coordinates = data['positions']
         topology = data['topology']
+        box = data["box"]
     
     # Create MDTraj topology object from topology data
     traj = md.Trajectory(xyz=coordinates, topology=topology[()])
+    traj.unitcell_vectors = box
     
     # # Add box dimensions to trajectory object
     # traj.unitcell_vectors = box

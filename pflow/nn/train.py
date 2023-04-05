@@ -22,24 +22,22 @@ def train(key, value_and_grad, nepoch, batchsize, params, X, lr, path, frame_dt)
         key, subkey = jax.random.split(key)
         xt = []
         xt_minus_dt = []
-        t_list = []
         train_rate = 1.0
         for traj_index in range(X.shape[0]):  
             # t = jax.random.uniform(subkey, (int(train_rate*X.shape[1]),))
             init_array = jnp.arange(1, X.shape[1])
             shuffled_array = jax.random.permutation(key, init_array)
             t = shuffled_array/(X.shape[1]-1)
-            t_list.append(t)
             dt = jnp.full((t.shape[0],),frame_dt)
             for i in range(t.shape[0]):
-                xt.append(X[traj_index,(X.shape[1]*t[i]).astype(int),:])
-                xt_minus_dt.append(X[traj_index,(X.shape[1]*(t[i]-dt[i])).astype(int),:])
+                xt.append(X[traj_index,((X.shape[1]-1)*t[i]).astype(int),:])
+                xt_minus_dt.append(X[traj_index,((X.shape[1]-1)*(t[i]-dt[i])).astype(int),:])
 
         xt = jnp.array(xt).reshape(-1,X.shape[2])
         xt_minus_dt = jnp.array(xt_minus_dt).reshape(-1,X.shape[2])
-        t_list = jnp.array(t_list).reshape(X.shape[0]*t.shape[0],1)
+        # t_list = jnp.array(t_list).reshape(X.shape[0]*t.shape[0],1)
         dt = jnp.full((X.shape[0]*t.shape[0],1),frame_dt)
-        value, grad = value_and_grad(state.params, xt, xt_minus_dt, t_list, dt)
+        value, grad = value_and_grad(state.params, xt, xt_minus_dt, dt)
 
         updates, opt_state = optimizer.update(grad, state.opt_state)
         params = optax.apply_updates(state.params, updates)

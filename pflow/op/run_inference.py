@@ -110,7 +110,9 @@ class RunInference(OP):
             print ('sample shape', x.shape)
             position = x[0]
             position = position.reshape(position.shape[0],-1,3)
-            np.savez("traj_data.npz",positions=position,box = cell,topology=topology)
+            box = cell[0]
+            box = np.repeat(box, repeats=position.shape[0], axis=0)
+            np.savez("traj_data.npz",positions=position,box = box,topology=topology)
             npz_to_xtc("traj_data.npz","traj.xtc")
             
         

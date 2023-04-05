@@ -18,11 +18,12 @@ from pflow.constants import (
         plumed_output_name,
         gmx_mdrun_log,
         gmx_xtc_name,
-        gmx_align_name
+        gmx_align_name,
+        gmx_center_name
     )
 
 from pflow.utils import run_command, set_directory, list_to_string
-from pflow.common.gromacs.trjconv import pbc_trjconv, align_trjconv, begin_trjconv
+from pflow.common.gromacs.trjconv import pbc_trjconv, center_trjconv, align_trjconv, begin_trjconv
 from pflow.common.sampler.command import get_grompp_cmd, get_mdrun_cmd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -139,9 +140,10 @@ class RunLabel(OP):
                 assert return_code == 0, err
                 logger.info(err)
 
-            pbc_trjconv(xtc = gmx_xtc_name)
-            align_trjconv(output_group = 1)
-            begin_trjconv(xtc = gmx_align_name)
+            pbc_trjconv(xtc = gmx_xtc_name,output = "md_nopbc.xtc")
+            align_trjconv(xtc = "md_nopbc.xtc", output_group = 1, output=gmx_align_name)
+            center_trjconv(xtc = gmx_align_name,output_group = 1, output=gmx_center_name)
+            begin_trjconv(xtc = gmx_center_name)
             
             # Load the data from the text file
             data = np.loadtxt(plumed_output_name)
@@ -161,8 +163,8 @@ class RunLabel(OP):
         conf_begin_path = None
         if op_in["label_config"]["type"] == "gmx":
             mdrun_log = gmx_mdrun_log
-            if os.path.exists(op_in["task_path"].joinpath(gmx_align_name)):
-                traj_aligned_path = op_in["task_path"].joinpath(gmx_align_name)
+            if os.path.exists(op_in["task_path"].joinpath(gmx_center_name)):
+                traj_aligned_path = op_in["task_path"].joinpath(gmx_center_name)
             if os.path.exists(op_in["task_path"].joinpath("begin.gro")):
                 conf_begin_path = op_in["task_path"].joinpath("begin.gro")
 

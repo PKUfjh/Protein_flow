@@ -35,14 +35,32 @@ def pbc_trjconv(
     )
     assert return_code == 0, err
     
+def center_trjconv(
+        xtc: str = "md_nopbc.xtc",
+        top: str = "topol.tpr",
+        output_group: int = 1,
+        output: str = "md_center.xtc"
+    ):
+    logger.info("handling pbc by gmx trjconv command ...")
+    cmd_list = gmx_trjconv_cmd.split()
+    cmd_list += ["-f", str(xtc)]
+    cmd_list += ["-s", str(top)]
+    cmd_list += ["-o", output]
+    cmd_list += ["-center"]
+    logger.info(list_to_string(cmd_list, " "))
+    return_code, out, err = run_command(
+        cmd_list,
+        stdin=f"{1}\n{output_group}\n"
+    )
+    assert return_code == 0, err
     
 def align_trjconv(
-        xtc: str = "md_nopbc.xtc",
+        xtc: str = "md_center.xtc",
         top: str = "topol.tpr",
         output_group: int = 1,
         output: str = gmx_align_name
     ):
-    logger.info("handling pbc by gmx trjconv command ...")
+    logger.info("aligning traj by gmx trjconv command ...")
     cmd_list = gmx_trjconv_cmd.split()
     cmd_list += ["-f", str(xtc)]
     cmd_list += ["-s", str(top)]

@@ -39,6 +39,7 @@ sel_gro_name = "conf_{walker:03d}_{idx:d}.gro"
 sel_gro_name_gmx = "conf_.gro"
 gmx_conf_out = "confout.gro"
 gmx_align_name = "traj_aligned_pro.xtc"
+gmx_center_name = "traj_center.xtc"
 
 # npz file
 traj_npz_name = 'traj_aligned.npz'

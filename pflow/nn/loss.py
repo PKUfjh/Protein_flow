@@ -5,14 +5,14 @@ from jax import device_get
 
 def make_loss(vec_field_net, L):
 
-    @partial(jax.vmap, in_axes=(None, 0, 0, 0, 0), out_axes=0)
-    def _matching(params, xt, xt_minus_dt, t, dt):
+    @partial(jax.vmap, in_axes=(None, 0, 0, 0), out_axes=0)
+    def _matching(params, xt, xt_minus_dt, dt):
         v = xt_minus_dt - xt
-        result = dt*vec_field_net(params, xt, t)
+        result = dt*vec_field_net(params, xt)
         return jnp.sum((v - result)**2)
 
-    def loss(params, xt, xt_minus_dt, t, dt):
-        m = _matching(params, xt, xt_minus_dt, t, dt)
+    def loss(params, xt, xt_minus_dt, dt):
+        m = _matching(params, xt, xt_minus_dt, dt)
         return jnp.mean(m)
 
     return loss

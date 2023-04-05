@@ -9,7 +9,7 @@ def make_flow(vec_field_net, dim, L, mxstep=1000):
     @partial(jax.vmap, in_axes=(None, 0), out_axes=0)
     def forward(params, x0):
         def _ode(x, t):
-            result = vec_field_net(params, x, t)
+            result = vec_field_net(params, x)
             print("result type",result)
             return result
         xt = ode.odeint(_ode,
