@@ -87,11 +87,12 @@ class TrainModel(OP):
         nheads = train_config["nheads"]
         nlayers = train_config["nlayers"]
         keysize = train_config["keysize"]
+        model_size = train_config["model_size"]
         epochs = train_config["epochs"]
         batchsize = train_config["batchsize"]
         lr = train_config["init_lr"]
         frame_dt = train_config["frame_dt"]
-        params, vec_field_net = make_transformer(subkey, n, dim, nheads, nlayers, keysize, L)
+        params, vec_field_net = make_transformer(subkey, n, dim, nheads, nlayers, keysize, model_size = model_size)
         modelname = "transformer_l_%d_h_%d_k_%d" % (nlayers, nheads, keysize)
         with set_directory(task_path):
             raveled_params, _ = ravel_pytree(params)

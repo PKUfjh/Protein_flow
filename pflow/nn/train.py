@@ -4,6 +4,7 @@ import optax
 import haiku as hk
 
 from pflow.nn import checkpoint
+from pflow.nn.transformer import center_points,standardize_points,standardize_with,reverse_standardize_points
 import os
 from typing import NamedTuple
 import itertools
@@ -22,22 +23,32 @@ def train(key, value_and_grad, nepoch, batchsize, params, X, lr, path, frame_dt)
         key, subkey = jax.random.split(key)
         xt = []
         xt_minus_dt = []
+        t_list = []
         train_rate = 1.0
         for traj_index in range(X.shape[0]):  
             # t = jax.random.uniform(subkey, (int(train_rate*X.shape[1]),))
             init_array = jnp.arange(1, X.shape[1])
             shuffled_array = jax.random.permutation(key, init_array)
             t = shuffled_array/(X.shape[1]-1)
+            t_list.append(t)
             dt = jnp.full((t.shape[0],),frame_dt)
             for i in range(t.shape[0]):
-                xt.append(X[traj_index,((X.shape[1]-1)*t[i]).astype(int),:])
-                xt_minus_dt.append(X[traj_index,((X.shape[1]-1)*(t[i]-dt[i])).astype(int),:])
+                xt_init = X[traj_index,((X.shape[1]-1)*t[i]).astype(int),:].reshape(-1,3)
+                # xt_standard,center = center_points(xt_init)
+                # xt_standard = xt_init
+                # xt_standard = xt_standard.reshape(-1)
+                xt.append(xt_init)
+                xt_minus_dt_init  = X[traj_index,((X.shape[1]-1)*(t[i]-dt[i])).astype(int),:].reshape(-1,3)
+                # xt_minus_dt_standard = xt_minus_dt_init
+                # xt_minus_dt_standard = xt_minus_dt_init - center
+                # xt_minus_dt_standard = xt_minus_dt_standard.reshape(-1)
+                xt_minus_dt.append(xt_minus_dt_init)
 
         xt = jnp.array(xt).reshape(-1,X.shape[2])
         xt_minus_dt = jnp.array(xt_minus_dt).reshape(-1,X.shape[2])
-        # t_list = jnp.array(t_list).reshape(X.shape[0]*t.shape[0],1)
+        t_list = jnp.array(t_list).reshape(X.shape[0]*t.shape[0],1)
         dt = jnp.full((X.shape[0]*t.shape[0],1),frame_dt)
-        value, grad = value_and_grad(state.params, xt, xt_minus_dt, dt)
+        value, grad = value_and_grad(state.params, xt, xt_minus_dt, t_list, dt)
 
         updates, opt_state = optimizer.update(grad, state.opt_state)
         params = optax.apply_updates(state.params, updates)
@@ -74,7 +85,7 @@ def train(key, value_and_grad, nepoch, batchsize, params, X, lr, path, frame_dt)
         #print (epoch, total_loss/counter)
         f.write( ("%6d" + "  %.6f" + "\n") % (epoch, total_loss/counter) )
 
-        if epoch % 100 == 0:
+        if epoch % 1000 == 0:
             ckpt = {"params": state.params,
                    }
             ckpt_filename = os.path.join(path, "epoch_%06d.pkl" %(epoch))

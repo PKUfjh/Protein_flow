@@ -67,14 +67,15 @@ class RunInference(OP):
         train_config = op_in["train_config"]
         nheads = train_config["nheads"]
         nlayers = train_config["nlayers"]
+        model_size = train_config["model_size"]
         keysize = train_config["keysize"]
         epochs = train_config["epochs"]
         batchsize = train_config["batchsize"]
         lr = train_config["init_lr"]
         frame_dt = train_config["frame_dt"]
         L = cell[0][0][0,0]
-        params, vec_field_net = make_transformer(subkey, n, dim, nheads, nlayers, keysize, L)
-        sampler = make_flow(vec_field_net, n*dim, L)
+        params, vec_field_net = make_transformer(subkey, n, dim, nheads, nlayers, keysize, model_size=model_size)
+        sampler = make_flow(vec_field_net, n*dim)
         
         print("\n========== Prepare logs ==========")
         folder = os.path.dirname(op_in["model_log"])

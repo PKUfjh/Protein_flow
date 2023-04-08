@@ -142,8 +142,9 @@ class RunLabel(OP):
 
             pbc_trjconv(xtc = gmx_xtc_name,output = "md_nopbc.xtc")
             align_trjconv(xtc = "md_nopbc.xtc", output_group = 1, output=gmx_align_name)
-            center_trjconv(xtc = gmx_align_name,output_group = 1, output=gmx_center_name)
-            begin_trjconv(xtc = gmx_center_name)
+            begin_trjconv(xtc = gmx_align_name, output_group = 3)
+            center_trjconv(xtc = gmx_align_name,output_group = 3, output=gmx_center_name)
+            
             
             # Load the data from the text file
             data = np.loadtxt(plumed_output_name)
