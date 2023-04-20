@@ -17,6 +17,9 @@ from pflow.constants import (
 from pflow.utils import set_directory
 import numpy as np
 import mdtraj as md
+import jax
+import jax.numpy as jnp
+from matplotlib import pyplot as plt
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -46,7 +49,8 @@ class CombineData(OP):
     def get_output_sign(cls):
         return OPIOSign(
             {
-                "combined_npz": Artifact(Path)
+                "combined_npz": Artifact(Path),
+                "neighbot_dis_fig": Artifact(Path, archive=None)
             }
         )
 
@@ -74,6 +78,8 @@ class CombineData(OP):
         """
         task_path = Path("combined")
         task_path.mkdir(exist_ok=True, parents=True)
+        def squared_distance(traj):
+            return jnp.sum((traj[:-1] - traj[1:])**2, axis=-1)
         with set_directory(task_path):
             positions_list = []
             box_list = []
@@ -100,10 +106,26 @@ class CombineData(OP):
                 np.savez(combined_npz_name, positions=combined_positions, box=combined_box, topology=topology)
             else:
                 np.savez(combined_npz_name, positions=combined_positions, box=combined_box)
+                
+            traj_num = combined_positions.shape[0]
+            combined_positions = combined_positions.reshape(traj_num,combined_positions.shape[1],\
+                combined_positions.shape[2]*combined_positions.shape[3])
+            all_dis_list = jax.vmap(squared_distance, in_axes=(0),out_axes = (0))(combined_positions)
+            # traj_num, simu_frames
+            M,N = all_dis_list.shape
+            
+            xlist = [i for i in range(N)]
+            plt.figure(1)
+            for i in range(N):
+                plt.scatter([xlist[i]]*M, all_dis_list.T[i])
+            plt.xlabel("time (ps)")
+            plt.ylabel("neigborig distance (nm)")
+            plt.savefig("all_data.png")
 
         op_out = OPIO(
             {
-                "combined_npz": task_path.joinpath(combined_npz_name)
+                "combined_npz": task_path.joinpath(combined_npz_name),
+                "neighbot_dis_fig": task_path.joinpath("all_data.png")
             }
         )
         return op_out
