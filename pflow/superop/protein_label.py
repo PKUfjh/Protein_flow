@@ -39,14 +39,14 @@ class Label(Steps):
 
         self._input_parameters = {
             "label_config": InputParameter(type=Dict),
-            "label_cv_config": InputParameter(type=Dict),
-            "conf_tags": InputParameter(type=List)
+            "label_cv_config": InputParameter(type=Dict)
         }        
         self._input_artifacts = {
             "topology" : InputArtifact(optional=True),
             "forcefield" : InputArtifact(optional=True),
             "confs": InputArtifact(),
             "index_file": InputArtifact(optional=True),
+            "conf_tags": InputArtifact(optional=True)
         }
         self._output_parameters = {
             "conf_tags": OutputParameter(type=List)
@@ -135,10 +135,9 @@ def _label(
             retry_on_transient_error = retry_times,
             **prep_template_config,
         ),
-        parameters={
-            "conf_tags": label_steps.inputs.parameters['conf_tags'],  
-        },
+        parameters={},
         artifacts={
+            "conf_tags": label_steps.inputs.artifacts['conf_tags'],  
             "confs": label_steps.inputs.artifacts['confs'],
         },
         key = step_keys['check_label_inputs'],

@@ -6,7 +6,8 @@ from dflow.python import (
     OP,
     OPIO,
     OPIOSign,
-    Artifact
+    Artifact,
+    BigParameter
 )
 from pflow.utils import load_json
 from pflow.constants import init_conf_name, walker_tag_fmt, model_tag_fmt
@@ -70,7 +71,7 @@ class PrepPflow(OP):
                 "train_config": Dict,
                 "cmd_config": Dict,
                 "cmd_cv_config": Dict,
-                "label_cv_config": Dict,
+                "label_cv_config": BigParameter(Dict),
                 "cluster_threshold": List[float],
                 "angular_mask": List,
                 "weights": List,
@@ -80,7 +81,7 @@ class PrepPflow(OP):
                 "dt": float,
                 "output_freq": float,
                 "slice_mode": str,
-                "label_config": Dict,
+                "label_config": BigParameter(Dict),
             }
         )
 

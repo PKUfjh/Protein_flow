@@ -184,14 +184,14 @@ def _pflow(
         template=label_op,
         parameters={
             "label_config": prep_pflow.outputs.parameters["label_config"],
-            "label_cv_config": prep_pflow.outputs.parameters["label_cv_config"],
-            "conf_tags" : select_pflow.outputs.parameters['selected_conf_tags']
+            "label_cv_config": prep_pflow.outputs.parameters["label_cv_config"]
         },
         artifacts={
             "topology": steps.inputs.artifacts["topology"],
             "forcefield" : steps.inputs.artifacts['forcefield'],
             "confs": select_pflow.outputs.artifacts["selected_confs"],
-            "index_file": steps.inputs.artifacts["index_file"]
+            "index_file": steps.inputs.artifacts["index_file"],
+            "conf_tags" : select_pflow.outputs.artifacts['selected_conf_tags']
         },
         key = 'label-block'
     )

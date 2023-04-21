@@ -3,7 +3,8 @@ from dflow.python import (
     OPIO,
     OPIOSign,
     Artifact,
-    Parameter
+    Parameter,
+    BigParameter
 )
 
 from typing import List, Optional, Union, Dict
@@ -16,6 +17,7 @@ from pflow.constants import (
     sel_gro_name
 )
 import numpy as np
+import json
 
 
 class RunSelect(OP):
@@ -58,7 +60,7 @@ class RunSelect(OP):
                 "numb_cluster": int,
                 "selected_confs": Artifact(List[Path], archive = None),
                 "selected_indices": Artifact(Path, archive = None),
-                "selected_conf_tags": Dict
+                "selected_conf_tags": Artifact(Path, archive= None)
             }
         )
 
@@ -125,13 +127,15 @@ class RunSelect(OP):
                 if op_in["slice_mode"] == "gmx" or op_in["slice_mode"] == "mdtraj" :
                     conf_list.append(task_path.joinpath(sel_gro_name.format(walker=walker_idx,idx=sel)))
                     conf_tags[sel_gro_name.format(walker = walker_idx,idx=sel)] = f"{op_in['task_name']}_{sel}"
+            with open("conf.json", "w") as f:
+                json.dump(conf_tags,f)
 
         
         op_out = OPIO({
                 "numb_cluster": numb_cluster,
                 "selected_confs": conf_list,
                 "selected_indices": task_path.joinpath(sel_ndx_name),
-                "selected_conf_tags": conf_tags
+                "selected_conf_tags": task_path.joinpath("conf.json")
             })
         return op_out
 

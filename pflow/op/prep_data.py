@@ -7,7 +7,8 @@ from dflow.python import (
     OPIO,
     OPIOSign,
     Artifact,
-    Parameter
+    Parameter,
+    BigParameter
 )
 from pflow.constants import (
     traj_npz_name
@@ -39,7 +40,7 @@ class PrepData(OP):
             {
                 "conf_begin": Artifact(Path),
                 "trajectory_aligned": Artifact(Path),
-                "task_name": str
+                "task_name": BigParameter(str)
             }
         )
 

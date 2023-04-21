@@ -53,11 +53,11 @@ class Selector(Steps):
         }
         self._output_parameters = {
             "numb_cluster": OutputParameter(type=List[int]),
-            "selected_conf_tags": OutputParameter(type=List),
         }
         self._output_artifacts = {
             "selected_confs": OutputArtifact(),
-            "selected_indices": OutputArtifact()
+            "selected_indices": OutputArtifact(),
+            "selected_conf_tags": OutputArtifact()
         }
 
         super().__init__(        
@@ -127,7 +127,7 @@ def _select(
             slices=Slices(sub_path = True,
                 input_parameter=["cluster_threshold", "task_name"],
                 input_artifact=["plm_out","xtc_traj","topology"],
-                output_artifact=["selected_confs", "selected_indices"],
+                output_artifact=["selected_confs", "selected_indices","selected_conf_tags"],
                 output_parameter=["numb_cluster"]
             ),
             **run_template_config,
@@ -156,8 +156,7 @@ def _select(
     select_steps.add(run_select)
 
     select_steps.outputs.parameters["numb_cluster"].value_from_parameter = run_select.outputs.parameters["numb_cluster"]
-    select_steps.outputs.parameters["selected_conf_tags"].value_from_parameter = run_select.outputs.parameters["selected_conf_tags"]
-
+    select_steps.outputs.artifacts["selected_conf_tags"]._from = run_select.outputs.artifacts["selected_conf_tags"]
     select_steps.outputs.artifacts["selected_confs"]._from = run_select.outputs.artifacts["selected_confs"]
     select_steps.outputs.artifacts["selected_indices"]._from = run_select.outputs.artifacts["selected_indices"]
     
