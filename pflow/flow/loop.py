@@ -200,10 +200,9 @@ def _pflow(
     data_pflow =  Step(
         "Data",
         template=data_op,
-        parameters={
-            "task_name": label_pflow.outputs.parameters['conf_tags']
-        },
+        parameters={},
         artifacts={
+            'succeeded_task_names': label_pflow.outputs.artifacts['succeeded_task_names'],
             "conf_begin": label_pflow.outputs.artifacts['conf_begin'],
             "trajectory_aligned" : label_pflow.outputs.artifacts['trajectory_aligned']
         },

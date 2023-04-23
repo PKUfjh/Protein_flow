@@ -7,7 +7,10 @@ from dflow import (
     Outputs,
     OutputArtifact,
     Step,
-    Steps
+    Steps,
+    argo_len,
+    argo_range,
+    if_expression,
 )
 from dflow.python import(
     PythonOPTemplate,
@@ -25,6 +28,7 @@ class Data(Steps):
     def __init__(
         self,
         name: str,
+        check_input_op: OP,
         prep_data_op: OP,
         combine_data_op: OP,
         prep_data_config: Dict,
@@ -33,10 +37,9 @@ class Data(Steps):
         retry_times = None
     ):
 
-        self._input_parameters = {
-            "task_name": InputParameter(type=List)
-        }        
+        self._input_parameters = {}        
         self._input_artifacts = {
+            "succeeded_task_names": InputArtifact(),
             "conf_begin": InputArtifact(),
             "trajectory_aligned": InputArtifact()
         }
@@ -59,6 +62,7 @@ class Data(Steps):
             )
         
         step_keys = {
+            "check_data_inputs": "check-data-inputs",
             "prep_data": "prep-data",
             "combine_data": "combine-data"
         }
@@ -66,6 +70,7 @@ class Data(Steps):
         self = _data(
             self, 
             step_keys,
+            check_input_op,
             prep_data_op,
             combine_data_op,
             prep_data_config = prep_data_config,
@@ -98,6 +103,7 @@ class Data(Steps):
 def _data(
         data_steps,
         step_keys,
+        check_data_input_op : OP,
         prep_data_op : OP,
         combine_data_op: OP,
         prep_data_config : Dict,
@@ -111,29 +117,57 @@ def _data(
     combine_template_config = combine_data_config.pop('template_config')
     prep_executor = init_executor(prep_data_config.pop('executor'))
     combine_executor = init_executor(combine_data_config.pop('executor'))
-
-
-    prep_data = Step(
-        'prep-data',
+    
+    check_data_inputs = Step(
+        'check-data-inputs',
         template=PythonOPTemplate(
-            prep_data_op,
+            check_data_input_op,
             python_packages = upload_python_package,
             retry_on_transient_error = retry_times,
-            slices=Slices(sub_path = True,
-                input_parameter=["task_name"],
-                input_artifact=["conf_begin","trajectory_aligned"],
-                output_artifact=["traj_npz"]),
             **prep_template_config,
         ),
+        parameters={},
+        artifacts={
+            "succeeded_task_names": data_steps.inputs.artifacts["succeeded_task_names"],  
+        },
+        key = step_keys['check_data_inputs'],
+        executor = prep_executor,
+        **prep_data_config,
+    )
+    data_steps.add(check_data_inputs)
+
+    nslices = argo_len(check_data_inputs.outputs.parameters['task_names'])
+    group_size = 5
+    templ = PythonOPTemplate(
+        prep_data_op,
+        python_packages = upload_python_package,
+        retry_on_transient_error = retry_times,
+        **prep_template_config,
+    )
+    templ.inputs.parameters["dflow_nslices"] = InputParameter()
+    templ.slices = Slices(
+        "list(range({{item}}*%s, min(({{item}}+1)*%s, %s)))" % (group_size, group_size, templ.inputs.parameters["dflow_nslices"]),
+        pool_size=1,
+        input_parameter=["task_name"],
+        input_artifact=["conf_begin","trajectory_aligned"],
+        output_artifact=["traj_npz"])
+    prep_data = Step(
+        'prep-data',
+        template=templ,
         parameters={
-            "task_name": data_steps.inputs.parameters['task_name']
+            "task_name": check_data_inputs.outputs.parameters['task_names'],
+            "dflow_nslices": nslices
         },
         artifacts={
             "trajectory_aligned": data_steps.inputs.artifacts['trajectory_aligned'],
             "conf_begin": data_steps.inputs.artifacts['conf_begin']
         },
-        key = step_keys['prep_data']+"-{{item.order}}",
+        key = step_keys['prep_data']+"-{{item}}",
         executor = prep_executor,
+        with_param=argo_range(if_expression(
+            "%s %% %s > 0" % (nslices, group_size),
+            "%s/%s + 1" % (nslices, group_size),
+            "%s/%s" % (nslices, group_size))),
         **prep_data_config,
     )
     data_steps.add(prep_data)

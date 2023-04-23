@@ -25,7 +25,7 @@ from pflow.superop.protein_train import Train
 from pflow.op.prep_cmd import PrepCMD
 from pflow.op.run_cmd import RunCMD
 from pflow.op.prep_label import CheckLabelInputs,PrepLabel
-from pflow.op.prep_data import PrepData
+from pflow.op.prep_data import CheckDataInputs,PrepData
 from pflow.op.combine_data import CombineData
 from pflow.op.run_label import RunLabel
 from pflow.op.run_select import RunSelect
@@ -71,6 +71,7 @@ def prep_pflow_op(
 
     data_op = Data(
         "data",
+        CheckDataInputs,
         PrepData,
         CombineData,
         prep_data_config,

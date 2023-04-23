@@ -11,6 +11,7 @@ from dflow import (
     Steps,
     argo_range,
     argo_len,
+    if_expression,
 )
 from dflow.python import(
     PythonOPTemplate,
@@ -48,12 +49,11 @@ class Label(Steps):
             "index_file": InputArtifact(optional=True),
             "conf_tags": InputArtifact(optional=True)
         }
-        self._output_parameters = {
-            "conf_tags": OutputParameter(type=List)
-        }
+        self._output_parameters = {}
         self._output_artifacts = {
             "conf_begin": OutputArtifact(),
-            "trajectory_aligned": OutputArtifact()
+            "trajectory_aligned": OutputArtifact(),
+            "succeeded_task_names": OutputArtifact()
         }
 
         super().__init__(        
@@ -146,24 +146,29 @@ def _label(
     )
     label_steps.add(check_label_inputs)
 
+    nslices = argo_len(check_label_inputs.outputs.parameters['conf_tags'])
+    group_size = 5
+    templ = PythonOPTemplate(
+        prep_label_op,
+        python_packages = upload_python_package,
+        retry_on_transient_error = retry_times,
+        **prep_template_config,
+    )
+    templ.inputs.parameters["dflow_nslices"] = InputParameter()
+    templ.slices = Slices(
+        "list(range({{item}}*%s, min(({{item}}+1)*%s, %s)))" % (group_size, group_size, templ.inputs.parameters["dflow_nslices"]),
+        pool_size=1,
+        input_parameter=["task_name"],
+        input_artifact=["conf"],
+        output_artifact=["task_path"])
     prep_label = Step(
         'prep-label',
-        template=PythonOPTemplate(
-            prep_label_op,
-            python_packages = upload_python_package,
-            retry_on_transient_error = retry_times,
-            slices=Slices("{{item}}",
-                group_size=200,
-                pool_size=1,
-                input_parameter=["task_name"],
-                input_artifact=["conf"],
-                output_artifact=["task_path"]),
-            **prep_template_config,
-        ),
+        template=templ,
         parameters={
             "label_config": label_steps.inputs.parameters['label_config'],
             "label_cv_config": label_steps.inputs.parameters['label_cv_config'],
-            "task_name": check_label_inputs.outputs.parameters['conf_tags']
+            "task_name": check_label_inputs.outputs.parameters['conf_tags'],
+            "dflow_nslices": nslices,
         },
         artifacts={
             "topology": label_steps.inputs.artifacts['topology'],
@@ -171,30 +176,36 @@ def _label(
         },
         key = step_keys['prep_label']+"-{{item}}",
         executor = prep_executor,
-        with_param=argo_range(argo_len(check_label_inputs.outputs.parameters['conf_tags'])),
+        with_param=argo_range(if_expression(
+            "%s %% %s > 0" % (nslices, group_size),
+            "%s/%s + 1" % (nslices, group_size),
+            "%s/%s" % (nslices, group_size))),
         when = "%s > 0" % (check_label_inputs.outputs.parameters["if_continue"]),
         **prep_config,
     )
     label_steps.add(prep_label)
 
+    templ = PythonOPTemplate(
+        run_label_op,
+        python_packages = upload_python_package,
+        retry_on_transient_error = retry_times,
+        **run_template_config,
+    )
+    templ.inputs.parameters["dflow_nslices"] = InputParameter()
+    templ.slices = Slices(
+        "list(range({{item}}*%s, min(({{item}}+1)*%s, %s)))" % (group_size, group_size, templ.inputs.parameters["dflow_nslices"]),
+        pool_size=1,
+        input_parameter=["task_name"],
+        input_artifact=["task_path"],
+        output_artifact=["plm_out","plm_fig","trajectory_aligned","conf_begin","md_log","succeeded_task_name"])
     run_label = Step(
         'run-label',
-        template=PythonOPTemplate(
-            run_label_op,
-            python_packages = upload_python_package,
-            retry_on_transient_error = retry_times,
-            slices=Slices("{{item}}",
-                group_size=200,
-                pool_size=1,
-                input_parameter=["task_name"],
-                input_artifact=["task_path"],
-                output_artifact=["plm_out","plm_fig","trajectory_aligned","conf_begin","md_log"]),
-            **run_template_config,
-        ),
+        template=templ,
         parameters={
             "label_config": label_steps.inputs.parameters["label_config"],
             "label_cv_config": label_steps.inputs.parameters['label_cv_config'],
             "task_name": check_label_inputs.outputs.parameters['conf_tags'],
+            "dflow_nslices": nslices,
         },
         artifacts={
             "forcefield": label_steps.inputs.artifacts['forcefield'],
@@ -203,13 +214,16 @@ def _label(
         },
         key = step_keys['run_label']+"-{{item}}",
         executor = run_executor,
-        with_param=argo_range(argo_len(check_label_inputs.outputs.parameters['conf_tags'])),
-        continue_on_success_ratio = 0.75,
+        with_param=argo_range(if_expression(
+            "%s %% %s > 0" % (nslices, group_size),
+            "%s/%s + 1" % (nslices, group_size),
+            "%s/%s" % (nslices, group_size))),
+        continue_on_failed = True,
         **run_config,
     )
     label_steps.add(run_label)
 
-    label_steps.outputs.parameters["conf_tags"].value_from_parameter = check_label_inputs.outputs.parameters["conf_tags"]
+    label_steps.outputs.artifacts["succeeded_task_names"]._from = run_label.outputs.artifacts["succeeded_task_name"]
     label_steps.outputs.artifacts["trajectory_aligned"]._from = run_label.outputs.artifacts["trajectory_aligned"]
     label_steps.outputs.artifacts["conf_begin"]._from = run_label.outputs.artifacts["conf_begin"]
     

@@ -14,7 +14,7 @@ from pflow.constants import (
     traj_npz_name
     )
 
-from pflow.utils import set_directory
+from pflow.utils import set_directory, read_txt
 import numpy as np
 import mdtraj as md
 
@@ -26,6 +26,58 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+class CheckDataInputs(OP):
+
+    r"""Check Inputs of Data Steps.
+    
+    If inputs `conf` are empty or None, `if_continue` will be False,
+    and the following ops of Label steps won't be executed.
+    """
+
+    @classmethod
+    def get_input_sign(cls):
+        return OPIOSign(
+            {
+                "succeeded_task_names":  Artifact(List[Path], optional=True)
+            }
+        )
+
+    @classmethod
+    def get_output_sign(cls):
+        return OPIOSign(
+            {
+                "task_names": BigParameter(List)
+            }
+        )
+
+    @OP.exec_sign_check
+    def execute(
+        self,
+        op_in: OPIO,
+    ) -> OPIO:
+        r"""Execute the OP.
+        
+        Parameters
+        ----------
+        op_in : dict
+            Input dict with components:
+            - `confs`: (`Artifact(List[Path])`) Conformations selected from trajectories of exploration steps.
+            
+        Returns
+        -------
+            Output dict with components:
+            - `if_continue`: (`bool`) Whether to execute following ops of Label steps.
+        """
+        task_names = []
+        for task_name in op_in["succeeded_task_names"]:
+            task_names.append(read_txt(task_name))
+
+        op_out = OPIO(
+            {
+                "task_names":task_names
+            }
+        )
+        return op_out
 
 class PrepData(OP):
 

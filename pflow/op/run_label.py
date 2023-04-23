@@ -23,11 +23,12 @@ from pflow.constants import (
         gmx_center_name
     )
 
-from pflow.utils import run_command, set_directory, list_to_string
+from pflow.utils import run_command, set_directory, list_to_string, write_txt
 from pflow.common.gromacs.trjconv import pbc_trjconv, center_trjconv, align_trjconv, begin_trjconv
 from pflow.common.sampler.command import get_grompp_cmd, get_mdrun_cmd
 import numpy as np
 import matplotlib.pyplot as plt
+import json
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -67,7 +68,8 @@ class RunLabel(OP):
                 "plm_fig": Artifact(Path, archive = None),
                 "conf_begin": Artifact(Path, archive = None),
                 "trajectory_aligned": Artifact(Path, archive = None),
-                "md_log": Artifact(Path, archive = None)
+                "md_log": Artifact(Path, archive = None),
+                "succeeded_task_name":  Artifact(Path, optional=True, archive = None)
             }
         )
 
@@ -146,7 +148,8 @@ class RunLabel(OP):
             begin_trjconv(xtc = gmx_align_name, output_group = 3)
             center_trjconv(xtc = gmx_align_name,output_group = 3, output=gmx_center_name)
             
-            
+            # set figure for plotting
+            plt.figure(figsize=(8,6))
             # Load the data from the text file
             data = np.loadtxt(plumed_output_name)
             # Extract the second column
@@ -161,6 +164,9 @@ class RunLabel(OP):
             # Show the plot
             plt.savefig("plm.png")
             
+            write_txt("task_name",op_in["task_name"])
+         
+        task_name_path = None   
         traj_aligned_path = None
         conf_begin_path = None
         if op_in["label_config"]["type"] == "gmx":
@@ -170,6 +176,8 @@ class RunLabel(OP):
             if os.path.exists(op_in["task_path"].joinpath("begin.gro")):
                 conf_begin_path = op_in["task_path"].joinpath("begin.gro")
 
+        if os.path.exists(op_in["task_path"].joinpath("task_name")):
+            task_name_path = op_in["task_path"].joinpath("task_name")
         plm_out = None
         if os.path.exists(op_in["task_path"].joinpath(plumed_output_name)):
             plm_out = op_in["task_path"].joinpath(plumed_output_name)
@@ -183,7 +191,8 @@ class RunLabel(OP):
                 "plm_fig": plm_fig,
                 "trajectory_aligned": traj_aligned_path,
                 "conf_begin": conf_begin_path,
-                "md_log": op_in["task_path"].joinpath(mdrun_log)
+                "md_log": op_in["task_path"].joinpath(mdrun_log),
+                "succeeded_task_name": task_name_path
             }
         )
         return op_out
