@@ -37,7 +37,9 @@ class Data(Steps):
         retry_times = None
     ):
 
-        self._input_parameters = {}        
+        self._input_parameters = {
+            "task_names" : InputParameter(type=List[str])
+        }        
         self._input_artifacts = {
             "succeeded_task_names": InputArtifact(),
             "conf_begin": InputArtifact(),
@@ -126,7 +128,9 @@ def _data(
             retry_on_transient_error = retry_times,
             **prep_template_config,
         ),
-        parameters={},
+        parameters={
+            "task_names":data_steps.inputs.parameters['task_names']
+        },
         artifacts={
             "succeeded_task_names": data_steps.inputs.artifacts["succeeded_task_names"],  
         },
@@ -137,7 +141,7 @@ def _data(
     data_steps.add(check_data_inputs)
 
     nslices = argo_len(check_data_inputs.outputs.parameters['task_names'])
-    group_size = 5
+    group_size = 100
     templ = PythonOPTemplate(
         prep_data_op,
         python_packages = upload_python_package,
@@ -155,7 +159,7 @@ def _data(
         'prep-data',
         template=templ,
         parameters={
-            "task_name": check_data_inputs.outputs.parameters['task_names'],
+            "task_name": data_steps.inputs.parameters['task_names'],
             "dflow_nslices": nslices
         },
         artifacts={

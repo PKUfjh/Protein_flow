@@ -49,7 +49,9 @@ class Label(Steps):
             "index_file": InputArtifact(optional=True),
             "conf_tags": InputArtifact(optional=True)
         }
-        self._output_parameters = {}
+        self._output_parameters = {
+            "task_names": OutputParameter(type=List)
+        }
         self._output_artifacts = {
             "conf_begin": OutputArtifact(),
             "trajectory_aligned": OutputArtifact(),
@@ -147,7 +149,7 @@ def _label(
     label_steps.add(check_label_inputs)
 
     nslices = argo_len(check_label_inputs.outputs.parameters['conf_tags'])
-    group_size = 5
+    group_size = 100
     templ = PythonOPTemplate(
         prep_label_op,
         python_packages = upload_python_package,
@@ -223,6 +225,8 @@ def _label(
     )
     label_steps.add(run_label)
 
+    label_steps.outputs.parameters["task_names"].value_from_parameter = check_label_inputs.outputs.parameters['conf_tags']
+    
     label_steps.outputs.artifacts["succeeded_task_names"]._from = run_label.outputs.artifacts["succeeded_task_name"]
     label_steps.outputs.artifacts["trajectory_aligned"]._from = run_label.outputs.artifacts["trajectory_aligned"]
     label_steps.outputs.artifacts["conf_begin"]._from = run_label.outputs.artifacts["conf_begin"]

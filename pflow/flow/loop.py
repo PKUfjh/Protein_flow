@@ -27,7 +27,6 @@ class ProteinFlow(Steps):
             selector_op: Steps,
             label_op: Steps,
             data_op: Steps,
-            train_op: Steps,
             step_config : dict,
             upload_python_package : str = None,
     ):
@@ -72,7 +71,6 @@ class ProteinFlow(Steps):
             selector_op,
             label_op,
             data_op,
-            train_op,
             step_config = step_config,
             upload_python_package = upload_python_package,
         )
@@ -110,7 +108,6 @@ def _pflow(
         selector_op,
         label_op,
         data_op,
-        train_op,
         step_config : dict,
         upload_python_package : Optional[str] = None
     ):  
@@ -200,7 +197,9 @@ def _pflow(
     data_pflow =  Step(
         "Data",
         template=data_op,
-        parameters={},
+        parameters={
+            "task_names": label_pflow.outputs.parameters['task_names']
+        },
         artifacts={
             'succeeded_task_names': label_pflow.outputs.artifacts['succeeded_task_names'],
             "conf_begin": label_pflow.outputs.artifacts['conf_begin'],
@@ -209,20 +208,6 @@ def _pflow(
         key = 'data-block'
     )
     steps.add(data_pflow)
-    
-    train_pflow =  Step(
-    "Train",
-    template=train_op,
-    parameters={
-        "model_tags": prep_pflow.outputs.parameters['model_tags'],
-        "train_config": prep_pflow.outputs.parameters["train_config"]
-    },
-    artifacts={
-        "data": data_pflow.outputs.artifacts["combined_npz"]
-    },
-    key = 'train-block'
-    )
-    steps.add(train_pflow)
     
     steps.outputs.artifacts['trajectory']._from = cmd_pflow.outputs.artifacts['trajectory']
     steps.outputs.artifacts['conf_outs']._from =  cmd_pflow.outputs.artifacts['conf_outs']

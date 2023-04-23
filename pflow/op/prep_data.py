@@ -38,7 +38,8 @@ class CheckDataInputs(OP):
     def get_input_sign(cls):
         return OPIOSign(
             {
-                "succeeded_task_names":  Artifact(List[Path], optional=True)
+                "succeeded_task_names":  Artifact(List[Path], optional=True),
+                "task_names": BigParameter(List)
             }
         )
 
@@ -46,6 +47,7 @@ class CheckDataInputs(OP):
     def get_output_sign(cls):
         return OPIOSign(
             {
+                "succeeded_task_names": BigParameter(List),
                 "task_names": BigParameter(List)
             }
         )
@@ -68,12 +70,15 @@ class CheckDataInputs(OP):
             Output dict with components:
             - `if_continue`: (`bool`) Whether to execute following ops of Label steps.
         """
-        task_names = []
+        succeeded_task_names = []
         for task_name in op_in["succeeded_task_names"]:
-            task_names.append(read_txt(task_name))
+            if task_name is not None:
+                succeeded_task_names.append(read_txt(task_name))
+        task_names = op_in["task_names"]
 
         op_out = OPIO(
             {
+                "succeeded_task_names": succeeded_task_names,
                 "task_names":task_names
             }
         )

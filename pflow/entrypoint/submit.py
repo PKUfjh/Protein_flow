@@ -41,7 +41,6 @@ def prep_pflow_op(
     run_select_config,
     prep_data_config,
     combine_data_config,
-    train_config,
     workflow_steps_config,
     retry_times
     ):
@@ -78,19 +77,12 @@ def prep_pflow_op(
         combine_data_config,
         retry_times=retry_times)
     
-    train_op = Train(
-        "train",
-        TrainModel,
-        train_config,
-        retry_times=retry_times)
-    
     pflow_op = ProteinFlow(
         "pflow",
         cmd_op,
         select_op,
         label_op,
         data_op,
-        train_op,
         workflow_steps_config
     )
     return pflow_op
@@ -120,7 +112,6 @@ def submit_pflow(
         run_select_config = normalized_resources[tasks["run_select_config"]],
         prep_data_config = normalized_resources[tasks["prep_data_config"]],
         combine_data_config = normalized_resources[tasks["combine_data_config"]],
-        train_config = normalized_resources[tasks["train_config"]],
         workflow_steps_config = normalized_resources[tasks["workflow_steps_config"]],
         retry_times=1
     )

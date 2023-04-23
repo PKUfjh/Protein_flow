@@ -87,15 +87,16 @@ class CombineData(OP):
 
             for npz_file in op_in["traj_npz"]:
                 # Load the NPZ file
-                data = np.load(npz_file, allow_pickle=True)
+                if npz_file is not None:
+                    data = np.load(npz_file, allow_pickle=True)
 
-                # Append positions and box dimensions to their respective lists
-                positions_list.append(data['positions'])
-                box_list.append(data['box'])
+                    # Append positions and box dimensions to their respective lists
+                    positions_list.append(data['positions'])
+                    box_list.append(data['box'])
 
-                # Use the first file's topology, assuming all files have the same topology
-                if 'topology' in data and topology is None:
-                    topology = data['topology']
+                    # Use the first file's topology, assuming all files have the same topology
+                    if 'topology' in data and topology is None:
+                        topology = data['topology']
 
             # Stack positions and box dimensions along a new axis
             combined_positions = np.stack(positions_list, axis=0)
