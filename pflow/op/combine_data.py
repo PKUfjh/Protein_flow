@@ -83,6 +83,7 @@ class CombineData(OP):
         with set_directory(task_path):
             positions_list = []
             box_list = []
+            forces_list = []
             topology = None
 
             for npz_file in op_in["traj_npz"]:
@@ -93,6 +94,7 @@ class CombineData(OP):
                     # Append positions and box dimensions to their respective lists
                     positions_list.append(data['positions'])
                     box_list.append(data['box'])
+                    forces_list.append(data["forces"])
 
                     # Use the first file's topology, assuming all files have the same topology
                     if 'topology' in data and topology is None:
@@ -101,12 +103,13 @@ class CombineData(OP):
             # Stack positions and box dimensions along a new axis
             combined_positions = np.stack(positions_list, axis=0)
             combined_box = np.stack(box_list, axis=0)
+            combined_forces = np.stack(forces_list, axis=0)
 
             # Save the combined data into a new NPZ file
             if topology is not None:
-                np.savez(combined_npz_name, positions=combined_positions, box=combined_box, topology=topology)
+                np.savez(combined_npz_name, positions=combined_positions, box=combined_box, forces=combined_forces,topology=topology)
             else:
-                np.savez(combined_npz_name, positions=combined_positions, box=combined_box)
+                np.savez(combined_npz_name, positions=combined_positions, box=combined_box, forces=combined_forces)
                 
             traj_num = combined_positions.shape[0]
             combined_positions = combined_positions.reshape(traj_num,combined_positions.shape[1],\

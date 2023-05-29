@@ -97,7 +97,8 @@ class PrepData(OP):
             {
                 "conf_begin": Artifact(Path),
                 "trajectory_aligned": Artifact(Path),
-                "task_name": BigParameter(str)
+                "task_name": BigParameter(str),
+                "plm_out": Artifact(Path)
             }
         )
 
@@ -143,9 +144,14 @@ class PrepData(OP):
             
             # Extract topology data from trajectory
             topology = traj.top.to_openmm()
+            
+            # Extract the force information
+            plm_data = np.loadtxt(op_in["plm_out"])
+            forces_data = plm_data[:,2]
+            forces_data = np.sqrt(forces_data)
 
             # Save the positions and box vectors to a npz file
-            np.savez(traj_npz_name, positions=positions, box=box, topology = topology)
+            np.savez(traj_npz_name, positions=positions, box=box, topology = topology, forces = forces_data)
 
         op_out = OPIO(
             {

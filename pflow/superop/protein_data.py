@@ -43,7 +43,8 @@ class Data(Steps):
         self._input_artifacts = {
             "succeeded_task_names": InputArtifact(),
             "conf_begin": InputArtifact(),
-            "trajectory_aligned": InputArtifact()
+            "trajectory_aligned": InputArtifact(),
+            "plm_out": InputArtifact()
         }
         self._output_parameters = {
         }
@@ -153,7 +154,7 @@ def _data(
         "list(range({{item}}*%s, min(({{item}}+1)*%s, %s)))" % (group_size, group_size, templ.inputs.parameters["dflow_nslices"]),
         pool_size=1,
         input_parameter=["task_name"],
-        input_artifact=["conf_begin","trajectory_aligned"],
+        input_artifact=["conf_begin","trajectory_aligned", "plm_out"],
         output_artifact=["traj_npz"])
     prep_data = Step(
         'prep-data',
@@ -164,7 +165,8 @@ def _data(
         },
         artifacts={
             "trajectory_aligned": data_steps.inputs.artifacts['trajectory_aligned'],
-            "conf_begin": data_steps.inputs.artifacts['conf_begin']
+            "conf_begin": data_steps.inputs.artifacts['conf_begin'],
+            "plm_out": data_steps.inputs.artifacts['plm_out']
         },
         key = step_keys['prep_data']+"-{{item}}",
         executor = prep_executor,

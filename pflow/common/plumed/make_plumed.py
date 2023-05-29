@@ -247,10 +247,12 @@ def make_restraint_plumed(
     if isinstance(at, int) or isinstance(at, float):
         at = [at for _ in range(len(cv_name_list))]
         
-    res_list, _ = make_moving_restraint_list(
+    res_list, res_names = make_moving_restraint_list(
         cv_name_list, kappa, step, nsteps, at, final
     )
+    print("res_names", res_names)
     content_list += res_list
+    cv_name_list.append(res_names[0]+".force2")
     content_list.append(make_print(cv_name_list, stride, output))
     return list_to_string(content_list, split_sign="\n")
 

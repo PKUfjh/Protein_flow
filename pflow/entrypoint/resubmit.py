@@ -111,6 +111,6 @@ def resubmit_pflow(
                 
                 if restart_flag == 1:
                     succeeded_steps.append(step)
-    wf = Workflow("pdflow-workflow-continue", pod_gc_strategy="OnPodSuccess", parallelism=50)
+    wf = Workflow("pdflow-workflow-continue", pod_gc_strategy="OnPodSuccess", parallelism=100)
     wf.add(pflow_steps)
     wf.submit(reuse_step=succeeded_steps)

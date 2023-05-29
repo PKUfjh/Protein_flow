@@ -203,7 +203,8 @@ def _pflow(
         artifacts={
             'succeeded_task_names': label_pflow.outputs.artifacts['succeeded_task_names'],
             "conf_begin": label_pflow.outputs.artifacts['conf_begin'],
-            "trajectory_aligned" : label_pflow.outputs.artifacts['trajectory_aligned']
+            "trajectory_aligned" : label_pflow.outputs.artifacts['trajectory_aligned'],
+            "plm_out": label_pflow.outputs.artifacts['plm_out']
         },
         key = 'data-block'
     )

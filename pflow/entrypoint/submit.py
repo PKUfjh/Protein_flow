@@ -153,6 +153,6 @@ def submit_pflow(
             },
             parameters={},
         )
-    wf = Workflow("pflow-workflow", pod_gc_strategy="OnPodSuccess", parallelism=50)
+    wf = Workflow("pflow-workflow", pod_gc_strategy="OnPodSuccess", parallelism=100)
     wf.add(pflow_steps)
     wf.submit()
