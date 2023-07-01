@@ -19,6 +19,8 @@ from dflow.python import(
 )
 from pflow.utils import init_executor
 
+from dflow.python.utils import handle_input_artifact
+
 
 class Data(Steps):
     
@@ -141,27 +143,31 @@ def _data(
     )
     data_steps.add(check_data_inputs)
 
-    nslices = argo_len(check_data_inputs.outputs.parameters['task_names'])
-    group_size = 100
-    templ = PythonOPTemplate(
+    # nslices = argo_len(check_data_inputs.outputs.parameters['task_names'])
+    # print(data_steps.inputs.artifacts['conf_begin'])
+    # input_sign = prep_data_op.get_input_sign()
+    # print("input sign", input_sign)
+    # from pathlib import Path
+    # input_sign['conf_begin'].type = List[Path]
+    # input['conf_begin'] = handle_input_artifact('conf_begin', input_sign['conf_begin'])
+    # print("input sign", input['conf_begin'])
+
+    prep_data = Step(
+        'prep-data',
+        template=PythonOPTemplate(
         prep_data_op,
         python_packages = upload_python_package,
         retry_on_transient_error = retry_times,
-        **prep_template_config,
-    )
-    templ.inputs.parameters["dflow_nslices"] = InputParameter()
-    templ.slices = Slices(
-        "list(range({{item}}*%s, min(({{item}}+1)*%s, %s)))" % (group_size, group_size, templ.inputs.parameters["dflow_nslices"]),
+        slices = Slices("{{item}}",
+        group_size=100,
         pool_size=1,
         input_parameter=["task_name"],
         input_artifact=["conf_begin","trajectory_aligned", "plm_out"],
-        output_artifact=["traj_npz"])
-    prep_data = Step(
-        'prep-data',
-        template=templ,
+        output_artifact=["traj_npz"]),
+        **prep_template_config,
+    ),
         parameters={
-            "task_name": data_steps.inputs.parameters['task_names'],
-            "dflow_nslices": nslices
+            "task_name": check_data_inputs.outputs.parameters['succeeded_task_names']
         },
         artifacts={
             "trajectory_aligned": data_steps.inputs.artifacts['trajectory_aligned'],
@@ -170,10 +176,11 @@ def _data(
         },
         key = step_keys['prep_data']+"-{{item}}",
         executor = prep_executor,
-        with_param=argo_range(if_expression(
-            "%s %% %s > 0" % (nslices, group_size),
-            "%s/%s + 1" % (nslices, group_size),
-            "%s/%s" % (nslices, group_size))),
+        with_param=argo_range(argo_len(check_data_inputs.outputs.parameters['succeeded_task_names'])),
+        # with_param=argo_range(if_expression(
+        #     "%s %% %s > 0" % (nslices, group_size),
+        #     "%s/%s + 1" % (nslices, group_size),
+        #     "%s/%s" % (nslices, group_size))),
         **prep_data_config,
     )
     data_steps.add(prep_data)
